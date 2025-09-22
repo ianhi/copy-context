@@ -1,65 +1,37 @@
-We are making a neovim plugin called `copy-context` that copies file and line
-references in multiple formats for use with AI agents and sharing code.
+# copy-context Plugin Development Context
+
+A Neovim plugin for copying file and line references in formats optimized for AI agents and code sharing.
+
+## Purpose
+Generate standardized file references that AI agents can easily consume:
+- `@path/to/file` - File references
+- `@path/to/file#L5` - Single line references
+- `@path/to/file#L5-10` - Line range references
+- GitHub permalinks with smart commit detection
 
 ## Architecture
+Modular design with 6 focused modules:
+- `init.lua` - Setup orchestration
+- `core.lua` - Core copying logic
+- `commands.lua` - Command/keybinding setup
+- `explorers.lua` - File explorer detection
+- `github.lua` - GitHub permalink generation
+- `debug.lua` - Debug utilities
 
-The plugin uses a modular architecture with focused single-responsibility modules:
+## Key Features
 
-### Core Modules
-- **`init.lua`** (24 lines) - Plugin entry point and setup orchestration
-- **`core.lua`** (81 lines) - Core copying logic and utilities
-- **`commands.lua`** (50 lines) - Command and keybinding setup
+**File Explorer Integration:** Automatically detects nvim-tree, neo-tree, oil.nvim, netrw, snacks.nvim when focused on files
 
-### Feature Modules
-- **`explorers.lua`** (167 lines) - File explorer support (nvim-tree, neo-tree, oil.nvim, netrw, snacks.nvim)
-- **`github.lua`** (196 lines) - GitHub permalink generation with smart commit detection
-- **`debug.lua`** (80 lines) - Debug utilities and testing tools
+**Smart GitHub URLs:** Chooses best commit reference (tags → upstream merge-base → HEAD)
 
-## Core Functionality
+**Lazy Loading:** Zero performance impact on normal editing
 
-### AI Agent Format
-Copy file references in `@file` format for AI agents:
-- File: `@src/main.py`
-- Single line: `@src/main.py#L5`
-- Line range: `@src/main.py#L5-10`
+## Implementation Guidelines
 
-### GitHub Permalinks
-Copy GitHub URLs that link directly to code:
-- File: `https://github.com/user/repo/blob/v1.2.3/src/main.py`
-- With lines: `https://github.com/user/repo/blob/v1.2.3/src/main.py#L5-L10`
+**Path Resolution:** Relative to git root when available, else relative to cwd
 
-### File Explorer Support
-Automatically detects when you're in a file explorer and copies the focused file:
-- **nvim-tree**, **neo-tree**, **oil.nvim**, **netrw**, **snacks.nvim**
-- Lazy-loading for zero performance impact on normal editing
-- Custom extractor system for adding new explorers
+**Error Handling:** Graceful fallbacks when git/explorer APIs unavailable
 
-## Smart Reference Selection
+**Performance:** Lazy-load explorer APIs only when in explorer buffers
 
-The plugin intelligently chooses the best commit reference:
-1. **Git tags** (v1.2.3) - for prettier, stable URLs
-2. **Upstream merge-base** - for branch collaboration
-3. **Current HEAD** - fallback for local work
-
-Paths resolve relative to git root when available, otherwise relative to cwd.
-
-## Commands & Keybindings
-
-- `<leader>cf` / `:CopyFileContext` - Copy AI agent file reference
-- `<leader>cs` / `:CopyLineContext` - Copy AI agent line reference
-- `<leader>cgY` / `:CopyGitHubFile` - Copy GitHub file link
-- `<leader>cgy` / `:CopyGitHubPermalink` - Copy GitHub permalink with lines
-- `:CopyContextDebug` - Debug file explorer detection
-
-### Available Functions for Custom Bindings
-- `require('copy-context').copy_context()` - Smart function that copies selection if present, else file
-
-The plugin is loadable via LazyVim from the `mpiannucci/copy-context` repository.
-
-## Development Notes
-
-### Modular Benefits
-- **Maintainability**: Clear separation of concerns
-- **Testability**: Each module can be tested independently
-- **Performance**: Lazy loading ensures minimal impact
-- **Extensibility**: Easy to add features without affecting existing code
+**Extensibility:** Custom extractor system for adding new file explorers
