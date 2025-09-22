@@ -3,10 +3,9 @@ local M = {}
 
 -- Debug function to help troubleshoot file explorer detection
 function M.debug_current_buffer()
-    -- Get the main module and explorer module
-    local main_module = require('copy-context.init')
+    -- Get the modules
+    local core = require('copy-context.core')
     local explorers = require('copy-context.explorers')
-    local internals = main_module._internal
 
     local debug_output = {}
     table.insert(debug_output, '=== COPY-CONTEXT DEBUG ===')
@@ -51,7 +50,7 @@ function M.debug_current_buffer()
     -- Test the full flow
     table.insert(debug_output, '')
     table.insert(debug_output, '--- Full Flow Test ---')
-    local result = internals.build_base_ref()
+    local result = core.build_base_ref()
     table.insert(debug_output, string.format('build_base_ref() result: "%s"', result))
 
     -- Testing guidance
