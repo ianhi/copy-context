@@ -9,6 +9,42 @@ A Neovim plugin to copy a reference to the current file or selected lines in a f
 
 Paths resolve relative to the project git root when available, otherwise relative to the current working directory.
 
+## File Explorer Support
+
+The plugin automatically detects and works with popular file explorers:
+- **nvim-tree** - Copy file paths from tree nodes
+- **neo-tree** - Copy file paths from filesystem sidebar
+- **oil.nvim** - Copy file paths from oil buffers
+- **netrw** - Copy file paths from built-in file browser
+
+No configuration needed! The plugin lazy-loads support for each explorer only when you're actually using it. This means zero performance impact on normal file editing.
+
+### Custom File Explorer Support
+
+Add support for any file explorer:
+
+```lua
+{
+  "mpiannucci/copy-context",
+  opts = {
+    custom_extractors = {
+      {
+        check = function()
+          return vim.bo.filetype == 'my-explorer'
+        end,
+        get_path = function()
+          -- Your custom logic (only runs when check passes)
+          local ok, explorer = pcall(require, 'my-explorer')
+          if ok then
+            return explorer.get_current_file()
+          end
+        end
+      }
+    }
+  },
+}
+```
+
 ## Installation
 
 ### LazyVim
