@@ -143,11 +143,12 @@ Note: For non-Lazy setups, the plugin auto-calls `setup()` with defaults, so add
 - `<leader>cgY`: copies GitHub file link (e.g. `https://github.com/user/repo/blob/commit/file`)
 - `<leader>cgy`: copies GitHub permalink with lines (e.g. `https://github.com/user/repo/blob/commit/file#L5-L10`)
 - Commands:
-  - `:CopyContext` (selection if present; otherwise file)
   - `:CopyFileContext` (always copies file reference)
   - `:CopyLineContext` (copies current line or selection)
   - `:CopyGitHubFile` (copies GitHub file link with current commit)
   - `:CopyGitHubPermalink` (copies GitHub permalink with lines and current commit)
+- Available functions for custom bindings:
+  - `require('copy-context').copy_context()` (smart: selection if present, else file)
 
 The plugin writes to the system clipboard (`+`) and the unnamed register (`"`). A small notification displays what was copied.
 
