@@ -3,8 +3,9 @@ local M = {}
 
 -- Debug function to help troubleshoot file explorer detection
 function M.debug_current_buffer()
-    -- Get the main module and its internal functions
+    -- Get the main module and explorer module
     local main_module = require('copy-context.init')
+    local explorers = require('copy-context.explorers')
     local internals = main_module._internal
 
     local debug_output = {}
@@ -24,7 +25,7 @@ function M.debug_current_buffer()
     -- Test each extractor
     table.insert(debug_output, '')
     table.insert(debug_output, '--- Testing Extractors ---')
-    for i, extractor in ipairs(internals.get_all_extractors()) do
+    for i, extractor in ipairs(explorers.get_all_extractors()) do
         local extractor_name = 'Unknown'
         if i == 1 then extractor_name = 'nvim-tree'
         elseif i == 2 then extractor_name = 'neo-tree'
