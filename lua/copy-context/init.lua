@@ -29,6 +29,10 @@ function M.setup(opts)
         M.copy_github_file()
     end, {})
 
+    -- Debug command for troubleshooting file explorer detection
+    vim.api.nvim_create_user_command('CopyContextDebug', function()
+        require('copy-context.debug').debug_current_buffer()
+    end, {})
 
     -- Set up default keybindings if not disabled
     if not opts.disable_default_keymap then
@@ -427,5 +431,11 @@ function M.copy_context()
     end
 end
 
+-- Expose internal functions for debugging (only when debug module is loaded)
+M._internal = {
+    get_all_extractors = get_all_extractors,
+    build_base_ref = build_base_ref,
+    get_explorer_file = get_explorer_file
+}
 
 return M
