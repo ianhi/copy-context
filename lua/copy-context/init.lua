@@ -1,5 +1,8 @@
 local M = {}
 
+-- Store custom extractors separately, only merge when needed
+local custom_extractors = nil
+
 function M.setup(opts)
     opts = opts or {}
 
@@ -181,9 +184,6 @@ local explorer_extractors = {
         end
     }
 }
-
--- Store custom extractors separately, only merge when needed
-local custom_extractors = nil
 
 -- Lazy-load custom extractors on first use
 local function get_all_extractors()
