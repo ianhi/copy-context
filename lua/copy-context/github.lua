@@ -46,15 +46,24 @@ local function parse_github_url(remote_url)
     return nil, nil
 end
 
--- Get GitHub repository info
+-- Get GitHub repository info (prefers upstream over origin for forks)
 local function get_github_repo_info()
-    -- Get the origin remote URL
-    local remote_url = git_cmd('remote get-url origin')
-    if not remote_url then
+    -- Try upstream first (for forks)
+    local upstream_url = git_cmd('remote get-url upstream')
+    if upstream_url then
+        local user, repo = parse_github_url(upstream_url)
+        if user and repo then
+            return user, repo, nil
+        end
+    end
+
+    -- Fallback to origin
+    local origin_url = git_cmd('remote get-url origin')
+    if not origin_url then
         return nil, nil, "No origin remote found"
     end
 
-    local user, repo = parse_github_url(remote_url)
+    local user, repo = parse_github_url(origin_url)
     if not user or not repo then
         return nil, nil, "Origin remote is not a GitHub repository"
     end
@@ -81,10 +90,12 @@ function M.build_github_permalink(current_file)
         return nil, err
     end
 
-    -- Smart commit detection logic:
-    -- 1. If we're on a tag, use the tag name for prettier URLs
-    -- 2. If we have an upstream branch, use merge-base with upstream
-    -- 3. Otherwise, use current HEAD
+    -- Smart commit detection for permalinks:
+    -- Goal: Find a commit SHA that exists in the upstream/origin repository
+    -- Priority:
+    -- 1. If current HEAD is tagged, use the tag (stable, pretty URLs)
+    -- 2. Try merge-base with upstream remote's main/master branch
+    -- 3. Use current HEAD commit SHA (works if pushed to any remote)
 
     local commit_ref = nil
 
@@ -93,29 +104,49 @@ function M.build_github_permalink(current_file)
     if current_tag then
         commit_ref = current_tag
     else
-        -- Try to find upstream branch and use merge-base
-        local upstream_branch = git_cmd('rev-parse --abbrev-ref --symbolic-full-name @{u}')
+        -- Try to find merge-base with upstream's default branch
+        -- This gives us a commit that definitely exists in upstream
+        local upstream_main = git_cmd('rev-parse --verify upstream/main 2>/dev/null')
+            or git_cmd('rev-parse --verify upstream/master 2>/dev/null')
 
-        if upstream_branch then
-            -- Get the merge-base between current branch and upstream
-            local merge_base = git_cmd('merge-base HEAD ' .. upstream_branch)
+        if upstream_main then
+            -- Get merge-base: the common ancestor commit
+            local merge_base = git_cmd('merge-base HEAD upstream/main 2>/dev/null')
+                or git_cmd('merge-base HEAD upstream/master 2>/dev/null')
 
             if merge_base then
-                -- Check if merge-base has a tag (for prettier URLs)
+                -- Check if merge-base has a tag
                 local base_tag = get_tag_for_commit(merge_base)
                 if base_tag then
                     commit_ref = base_tag
                 else
-                    -- Use the upstream branch ref directly for consistency
-                    commit_ref = upstream_branch
+                    -- Use the merge-base commit SHA as permalink
+                    commit_ref = merge_base
                 end
-            else
-                -- If merge-base fails, just use upstream branch
-                commit_ref = upstream_branch
             end
         end
 
-        -- Fallback to current HEAD if upstream logic fails (common in detached HEAD)
+        -- If no upstream, try origin's default branch
+        if not commit_ref then
+            local origin_main = git_cmd('rev-parse --verify origin/main 2>/dev/null')
+                or git_cmd('rev-parse --verify origin/master 2>/dev/null')
+
+            if origin_main then
+                local merge_base = git_cmd('merge-base HEAD origin/main 2>/dev/null')
+                    or git_cmd('merge-base HEAD origin/master 2>/dev/null')
+
+                if merge_base then
+                    local base_tag = get_tag_for_commit(merge_base)
+                    if base_tag then
+                        commit_ref = base_tag
+                    else
+                        commit_ref = merge_base
+                    end
+                end
+            end
+        end
+
+        -- Fallback: use current HEAD SHA (works if commit is pushed)
         if not commit_ref then
             commit_ref = git_cmd('rev-parse HEAD')
             if not commit_ref then
